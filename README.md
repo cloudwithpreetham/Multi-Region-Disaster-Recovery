@@ -8,15 +8,17 @@ This project provisions identical infrastructure across two AWS regions and wire
 
 **Regions:** `ap-south-1` (primary) · `us-east-1` (secondary)
 
+**Topology:** Active-passive — secondary stays warm, promoted on failover
+
 **Tech stack:** AWS, Terraform, Route53, CloudFront, S3, RDS, ALB, Auto Scaling, IAM
 
 ## Status
 
-In progress — see [PLAN.md](./PLAN.md) for the day-by-day build plan, current progress, and architecture decisions.
+In progress — Day 2 of 14 complete (region selection, topology decision, Terraform module structure). See [PLAN.md](./docs/PLAN.md) for the day-by-day build plan, current progress, and architecture decisions.
 
 ## Architecture
 
-Design and topology diagram in [docs/architecture.md](./docs/architecture.md) (in progress).
+Design, topology diagram, and decision rationale in [docs/architecture/architecture.md](./docs/architecture/architecture.md).
 
 ## Key Deliverable
 
