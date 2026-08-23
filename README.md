@@ -1,4 +1,4 @@
-# multi-region-disaster-recovery
+# Multi-Region-Disaster-Recovery
 
 Terraform-codified multi-region AWS infrastructure designed to survive a regional failure — automated traffic routing, replicated data, continuous health checks, and a tested failover process.
 

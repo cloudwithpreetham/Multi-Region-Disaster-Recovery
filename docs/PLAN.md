@@ -1,4 +1,4 @@
-# PLAN.md — multi-region-disaster-recovery Build Plan
+# PLAN.md — Multi-Region-Disaster-Recovery Build Plan
 
 Day-by-day roadmap for building a Terraform-codified, multi-region AWS high-availability architecture — the goal is a system that survives a full regional outage with replicated data, automated traffic routing, and a tested failover process.
 
