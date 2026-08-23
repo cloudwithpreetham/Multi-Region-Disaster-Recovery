@@ -17,7 +17,7 @@ Rejected active-active: adds data-consistency and write-conflict complexity, plu
 
 ## Terraform Module Structure
 
-One shared `modules/region` module, consumed via `environments/primary.tfvars` and `environments/secondary.tfvars`, with an `is_primary` flag toggling ASG size and RDS writer-vs-replica behavior. Global Route53/CloudFront resources live outside the module, since they're not per-region.
+One shared `terraform/modules/region` module, consumed via `terraform/environments/primary.tfvars` and `terraform/environments/secondary.tfvars`, with an `is_primary` flag toggling ASG size and RDS writer-vs-replica behavior. Global Route53/CloudFront resources live outside the module, since they're not per-region.
 
 ## Data Replication Strategy
 
