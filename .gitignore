@@ -1,4 +1,18 @@
-
-
 # NOTES
 AGENT.md
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# local-only var files (never the tracked terraform/environments/*.tfvars)
+terraform.tfvars
+*.auto.tfvars
