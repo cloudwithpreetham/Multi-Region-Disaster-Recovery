@@ -14,7 +14,7 @@ This project provisions identical infrastructure across two AWS regions and wire
 
 ## Status
 
-In progress — Day 2 of 14 complete (region selection, topology decision, Terraform module structure). See [PLAN.md](./docs/PLAN.md) for the day-by-day build plan, current progress, and architecture decisions.
+In progress — Day 3 of 14 complete (region selection, topology decision, shared Terraform module for VPC/subnets/security groups). See [PLAN.md](./docs/PLAN.md) for the day-by-day build plan, current progress, and architecture decisions.
 
 ## Architecture
 
