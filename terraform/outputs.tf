@@ -21,3 +21,15 @@ output "app_security_group_id" {
 output "rds_security_group_id" {
   value = module.region.rds_security_group_id
 }
+
+output "alb_dns_name" {
+  value = module.region.alb_dns_name
+}
+
+output "alb_zone_id" {
+  value = module.region.alb_zone_id
+}
+
+output "asg_name" {
+  value = module.region.asg_name
+}
