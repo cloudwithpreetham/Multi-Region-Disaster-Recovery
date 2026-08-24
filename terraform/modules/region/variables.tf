@@ -47,6 +47,36 @@ variable "db_port" {
   default     = 5432
 }
 
+variable "health_check_path" {
+  description = "Path the ALB target group health-checks against"
+  type        = string
+  default     = "/health"
+}
+
+variable "instance_type" {
+  description = "EC2 instance type for app-tier ASG instances"
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "asg_min_size" {
+  description = "Minimum instances in the app-tier Auto Scaling Group"
+  type        = number
+  default     = 1
+}
+
+variable "asg_max_size" {
+  description = "Maximum instances in the app-tier Auto Scaling Group"
+  type        = number
+  default     = 3
+}
+
+variable "asg_desired_capacity" {
+  description = "Desired instances in the app-tier Auto Scaling Group"
+  type        = number
+  default     = 2
+}
+
 variable "tags" {
   description = "Extra tags merged onto every resource in this module"
   type        = map(string)
