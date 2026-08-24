@@ -32,3 +32,18 @@ output "rds_security_group_id" {
   description = "Security group ID for RDS (Day 6 will attach this)"
   value       = aws_security_group.rds.id
 }
+
+output "alb_dns_name" {
+  description = "Public DNS name of this region's ALB (Route53 target, Phase 4)"
+  value       = aws_lb.this.dns_name
+}
+
+output "alb_zone_id" {
+  description = "Hosted zone ID of this region's ALB (for Route53 alias records)"
+  value       = aws_lb.this.zone_id
+}
+
+output "asg_name" {
+  description = "Name of this region's app-tier Auto Scaling Group"
+  value       = aws_autoscaling_group.app.name
+}
