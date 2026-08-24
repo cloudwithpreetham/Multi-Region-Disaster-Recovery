@@ -28,3 +28,27 @@ variable "private_subnet_cidrs" {
   description = "CIDR blocks for private subnets, one per AZ"
   type        = list(string)
 }
+
+variable "instance_type" {
+  description = "EC2 instance type for app-tier ASG instances"
+  type        = string
+  default     = "t3.micro"
+}
+
+variable "asg_min_size" {
+  description = "Minimum instances in the app-tier Auto Scaling Group"
+  type        = number
+  default     = 1
+}
+
+variable "asg_max_size" {
+  description = "Maximum instances in the app-tier Auto Scaling Group"
+  type        = number
+  default     = 3
+}
+
+variable "asg_desired_capacity" {
+  description = "Desired instances in the app-tier Auto Scaling Group"
+  type        = number
+  default     = 2
+}
