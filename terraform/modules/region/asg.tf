@@ -15,6 +15,10 @@ resource "aws_launch_template" "app" {
 
   vpc_security_group_ids = [aws_security_group.app.id]
 
+  iam_instance_profile {
+    name = aws_iam_instance_profile.app.name
+  }
+
   # Minimal placeholder — brings up a health-check endpoint on app_port so
   # the ALB target group goes healthy. Real app deploy replaces this later.
   user_data = base64encode(<<-EOF
