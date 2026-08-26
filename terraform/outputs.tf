@@ -33,3 +33,12 @@ output "alb_zone_id" {
 output "asg_name" {
   value = module.region.asg_name
 }
+
+output "db_arn" {
+  value = module.region.db_arn
+}
+
+output "db_endpoint" {
+  value     = module.region.db_endpoint
+  sensitive = true
+}
