@@ -52,3 +52,9 @@ variable "asg_desired_capacity" {
   type        = number
   default     = 2
 }
+
+variable "primary_db_arn" {
+  description = "ARN of primary region's RDS instance — only needed on the secondary apply, grabbed from primary's db_arn output"
+  type        = string
+  default     = null
+}
