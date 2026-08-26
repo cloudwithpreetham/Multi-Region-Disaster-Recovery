@@ -47,3 +47,13 @@ output "asg_name" {
   description = "Name of this region's app-tier Auto Scaling Group"
   value       = aws_autoscaling_group.app.name
 }
+
+output "db_arn" {
+  description = "ARN of this region's RDS instance (primary's ARN feeds the replica's primary_db_arn var; replica has no separate ARN needed elsewhere)"
+  value       = var.is_primary ? aws_db_instance.primary[0].arn : aws_db_instance.replica[0].arn
+}
+
+output "db_endpoint" {
+  description = "Connection endpoint for this region's RDS instance (primary or replica)"
+  value       = var.is_primary ? aws_db_instance.primary[0].endpoint : aws_db_instance.replica[0].endpoint
+}
