@@ -82,3 +82,45 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "db_engine" {
+  description = "RDS engine"
+  type        = string
+  default     = "postgres"
+}
+
+variable "db_engine_version" {
+  description = "RDS engine version (major-version-only lets AWS pick the latest supported minor, avoiding this going stale)"
+  type        = string
+  default     = "16"
+}
+
+variable "db_instance_class" {
+  description = "RDS instance class"
+  type        = string
+  default     = "db.t4g.micro"
+}
+
+variable "db_allocated_storage" {
+  description = "Allocated storage in GB for the primary DB instance"
+  type        = number
+  default     = 20
+}
+
+variable "db_name" {
+  description = "Initial database name (primary only — replicas inherit it)"
+  type        = string
+  default     = "appdb"
+}
+
+variable "db_username" {
+  description = "Master username (primary only — replicas inherit credentials)"
+  type        = string
+  default     = "appadmin"
+}
+
+variable "primary_db_arn" {
+  description = "ARN of the primary region's RDS instance. Required when is_primary = false — grab it from the primary apply's db_arn output and pass it via this region's tfvars."
+  type        = string
+  default     = null
+}
