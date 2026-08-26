@@ -14,7 +14,7 @@ This project provisions identical infrastructure across two AWS regions and wire
 
 ## Status
 
-In progress — Day 5 of 14 complete (region selection, topology decision, shared Terraform module for VPC/subnets/security groups, ALB + Auto Scaling Group verified in both regions, remote state on S3/DynamoDB, IAM instance roles attached). See [PLAN.md](./docs/PLAN.md) for the day-by-day build plan, current progress, and architecture decisions.
+In progress — Day 6 of 14 complete (region selection, topology decision, shared Terraform module for VPC/subnets/security groups, ALB + Auto Scaling Group verified in both regions, remote state on S3/DynamoDB, IAM instance roles attached, RDS cross-region read replica live and verified). S3 CRR deferred to Day 7. See [PLAN.md](./docs/PLAN.md) for the day-by-day build plan, current progress, and architecture decisions.
 
 ## Architecture
 
