@@ -7,6 +7,12 @@ resource "random_id" "assets_suffix" {
 resource "aws_s3_bucket" "assets" {
   bucket = "${var.project_name}-${local.role}-${var.assets_bucket_prefix}-${random_id.assets_suffix.hex}"
 
+  # Versioning is required for CRR, but that means old/deleted object
+  # versions pile up and block a plain bucket delete. force_destroy
+  # lets `terraform destroy` clean the bucket out itself instead of
+  # needing a manual aws s3api version-purge every teardown.
+  force_destroy = true
+
   tags = merge(local.common_tags, {
     Name = "${var.project_name}-${local.role}-assets"
   })
