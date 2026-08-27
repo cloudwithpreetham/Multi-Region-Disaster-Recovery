@@ -124,3 +124,15 @@ variable "primary_db_arn" {
   type        = string
   default     = null
 }
+
+variable "assets_bucket_prefix" {
+  description = "Prefix for the S3 assets bucket name (a random suffix is appended for global uniqueness)"
+  type        = string
+  default     = "assets"
+}
+
+variable "replication_destination_bucket_arn" {
+  description = "ARN of the secondary region's assets bucket. Required when is_primary = true — apply secondary first, grab it from that apply's assets_bucket_arn output, and pass it via primary's tfvars."
+  type        = string
+  default     = null
+}
