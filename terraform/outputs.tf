@@ -42,3 +42,11 @@ output "db_endpoint" {
   value     = module.region.db_endpoint
   sensitive = true
 }
+
+output "assets_bucket_arn" {
+  value = module.region.assets_bucket_arn
+}
+
+output "assets_bucket_name" {
+  value = module.region.assets_bucket_name
+}
