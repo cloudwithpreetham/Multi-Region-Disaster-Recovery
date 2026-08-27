@@ -57,3 +57,13 @@ output "db_endpoint" {
   description = "Connection endpoint for this region's RDS instance (primary or replica)"
   value       = var.is_primary ? aws_db_instance.primary[0].endpoint : aws_db_instance.replica[0].endpoint
 }
+
+output "assets_bucket_arn" {
+  description = "ARN of this region's assets bucket. Secondary's is needed by primary's replication_destination_bucket_arn var — apply secondary first."
+  value       = aws_s3_bucket.assets.arn
+}
+
+output "assets_bucket_name" {
+  description = "Name of this region's assets bucket"
+  value       = aws_s3_bucket.assets.bucket
+}
