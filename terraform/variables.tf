@@ -58,3 +58,9 @@ variable "primary_db_arn" {
   type        = string
   default     = null
 }
+
+variable "replication_destination_bucket_arn" {
+  description = "ARN of secondary region's assets bucket — only needed on the primary apply, grabbed from secondary's assets_bucket_arn output"
+  type        = string
+  default     = null
+}
