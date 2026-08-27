@@ -14,4 +14,6 @@ module "region" {
   asg_desired_capacity = var.asg_desired_capacity
 
   primary_db_arn = var.primary_db_arn
+
+  replication_destination_bucket_arn = var.replication_destination_bucket_arn
 }
