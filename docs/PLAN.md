@@ -32,7 +32,7 @@ Day-by-day roadmap for building a Terraform-codified, multi-region AWS high-avai
 
 | Day | Task                                                                                                  | Status | Notes / Decisions |
 | --- | ----------------------------------------------------------------------------------------------------- | ------ | ----------------- |
-| 8   | Configure Route53 latency-based or geolocation routing across both ALBs; add per-region health checks | ⬜     |                   |
+| 8   | Configure Route53 latency-based or geolocation routing across both ALBs; add per-region health checks | ✅     | New `terraform/global/` stack (own state key, since Route53 needs both regions' ALB info at once — unlike the sequential ARN-passing pattern for RDS/S3). Hosted zone `dr.cloudwithpreetham.in` created, delegated from GoDaddy via 4 NS records (host `dr`) — propagated within minutes. Latency-based routing records (not failover — that's Day 10) for both ALBs, each with an HTTP health check on `/health`; Route53 auto-excludes an unhealthy region from answers even ahead of Day 10's dedicated failover policy. Verified: `dig NS` confirms delegation, `dig A` resolves to the geographically-nearer region's ALB, `curl .../health` returns `ok` through the full Route53 → ALB path. |
 | 9   | Deploy CloudFront in front of both regions; verify edge caching and origin failover                   | ⬜     |                   |
 
 ## Phase 5 — Failover Automation & Health Checks
