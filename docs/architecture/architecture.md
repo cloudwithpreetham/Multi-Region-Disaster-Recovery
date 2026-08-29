@@ -29,7 +29,13 @@ One shared `terraform/modules/region` module, consumed via `terraform/environmen
 
 ## Traffic Routing
 
-_(Route53 + CloudFront design — Day 8-9)_
+**Domain:** `dr.cloudwithpreetham.in`, a subdomain of the live `cloudwithpreetham.in` (registered at GoDaddy) delegated to a dedicated Route53 hosted zone via NS records — keeps this project's DNS fully isolated from the live domain rather than migrating the whole thing into Route53.
+
+**Route53:** A single alias record points the subdomain straight at CloudFront. This replaced an earlier Day 8 design (dual latency-based A-records, one per region, each with its own health check) once CloudFront's origin group took over as the actual failover mechanism — two records doing the same job as one origin group was redundant. The two per-region health checks were kept anyway: useful standalone, and feed Day 10's RDS-promotion trigger.
+
+**CloudFront:** Sits in front of both regions via an origin group — primary ALB is the default origin, with automatic failover to the secondary ALB on 500/502/503/504 responses. Requires an ACM certificate in `us-east-1` specifically (an AWS platform requirement for CloudFront, unrelated to where either app region actually is), DNS-validated through records in the same hosted zone. Cache behavior uses a short default TTL (60s, max 300s) since this is dynamic app traffic being fronted, not static assets — verified via `x-cache: Hit from cloudfront` on repeat requests.
+
+**terraform/global/:** Both Route53 and CloudFront live in their own standalone Terraform stack, separate from `modules/region`, because they need both regions' ALB DNS name/zone ID simultaneously — a different dependency shape than the sequential single-ARN-passing used for RDS (Day 6) and S3 replication (Day 7).
 
 ## Failover Process
 
