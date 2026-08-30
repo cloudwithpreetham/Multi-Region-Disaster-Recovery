@@ -14,7 +14,7 @@ This project provisions identical infrastructure across two AWS regions and wire
 
 ## Status
 
-In progress — Day 9 of 14 complete (region selection, topology decision, shared Terraform module for VPC/subnets/security groups, ALB + Auto Scaling Group verified in both regions, remote state on S3/DynamoDB, IAM instance roles attached, RDS cross-region read replica live, S3 Cross-Region Replication verified, CloudFront with origin failover live at dr.cloudwithpreetham.in). See [PLAN.md](./docs/PLAN.md) for the day-by-day build plan, current progress, and architecture decisions.
+In progress — Day 10 of 14 complete (region selection, topology decision, shared Terraform module for VPC/subnets/security groups, ALB + Auto Scaling Group verified in both regions, remote state on S3/DynamoDB, IAM instance roles attached, RDS cross-region read replica live, S3 Cross-Region Replication verified, CloudFront with origin failover live, automated RDS replica promotion verified end to end via a real triggered promotion). See [PLAN.md](./docs/PLAN.md) for the day-by-day build plan, current progress, and architecture decisions.
 
 ## Architecture
 
