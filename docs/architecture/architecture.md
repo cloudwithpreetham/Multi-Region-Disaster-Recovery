@@ -39,4 +39,10 @@ One shared `terraform/modules/region` module, consumed via `terraform/environmen
 
 ## Failover Process
 
-_(Route53 failover policy, RDS promotion automation — Day 10-11)_
+**Traffic:** Handled automatically by CloudFront's origin group (Day 9) — no Route53 failover routing policy needed on top of it, since CloudFront's failover already IS the effective mechanism once traffic passes through it.
+
+**Data:** Primary's Route53 health check feeds a CloudWatch alarm (3 consecutive failed minutes, avoiding a single-blip trigger) which publishes to SNS, invoking a Lambda that promotes the secondary's RDS read replica via `rds:PromoteReadReplica`. Route53 health check CloudWatch metrics only exist in `us-east-1` — same AWS platform quirk as ACM certs for CloudFront — so this entire chain (alarm, SNS, Lambda, IAM) lives under a `us-east-1` provider alias regardless of which regions the app itself uses. The Lambda checks whether the target is still actually a replica before attempting promotion, so a repeated/flapping alarm won't error out against an already-promoted instance.
+
+**One-way operation:** Promotion is irreversible from Terraform's perspective — a promoted replica becomes an independent writer and no longer replicates. Re-establishing replication after a recovered primary (failback) is a manual runbook step, not something automated here (see Day 12-14).
+
+**Verified live**, not simulated: manually triggered via a direct SNS publish, confirmed via CloudWatch Logs and `aws rds describe-db-instances` — the instance transitioned `modifying` → `backing-up` → `available` with `ReadReplicaSourceDBInstanceIdentifier` cleared, a genuine complete promotion end to end.
