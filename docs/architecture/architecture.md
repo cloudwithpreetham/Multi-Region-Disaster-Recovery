@@ -46,3 +46,14 @@ One shared `terraform/modules/region` module, consumed via `terraform/environmen
 **One-way operation:** Promotion is irreversible from Terraform's perspective — a promoted replica becomes an independent writer and no longer replicates. Re-establishing replication after a recovered primary (failback) is a manual runbook step, not something automated here (see Day 12-14).
 
 **Verified live**, not simulated: manually triggered via a direct SNS publish, confirmed via CloudWatch Logs and `aws rds describe-db-instances` — the instance transitioned `modifying` → `backing-up` → `available` with `ReadReplicaSourceDBInstanceIdentifier` cleared, a genuine complete promotion end to end.
+
+## Capacity & Failover Absorption
+
+Secondary runs a deliberately asymmetric Auto Scaling configuration from primary — lower baseline, higher ceiling. `desired_capacity` is 1 (vs primary's 2, pure cost-saving as a standby that isn't serving live traffic), but `max_size` is 4 (vs primary's 3), so it has more headroom than primary to absorb full production load once Day 10 promotes it.
+
+Two mechanisms close the gap between "warm standby" and "actually ready":
+
+- **Target-tracking scaling** (both regions): a CPU-based policy so capacity flexes with real load rather than sitting at a fixed `desired_capacity` regardless of traffic.
+- **Warm pool** (secondary only): pre-initialized stopped EC2 instances sitting alongside the ASG. When desired capacity increases, the ASG draws from the warm pool first — instances come up in seconds rather than going through a full launch, boot, and user-data cycle. This is a `warm_pool { }` block nested inside `aws_autoscaling_group` in this provider, not a standalone resource (first attempt tried `aws_autoscaling_warm_pool` as its own resource type, which doesn't exist).
+
+Primary doesn't get a warm pool — it's already live and serving traffic, so there's nothing to pre-warm.
