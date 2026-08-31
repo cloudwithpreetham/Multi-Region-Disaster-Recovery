@@ -53,6 +53,24 @@ variable "asg_desired_capacity" {
   default     = 2
 }
 
+variable "scale_target_cpu" {
+  description = "Target average CPU utilization (%) for the target-tracking scaling policy"
+  type        = number
+  default     = 50
+}
+
+variable "enable_warm_pool" {
+  description = "Enable a warm pool of pre-initialized stopped instances"
+  type        = bool
+  default     = false
+}
+
+variable "warm_pool_min_size" {
+  description = "Minimum stopped instances to keep pre-initialized in the warm pool"
+  type        = number
+  default     = 0
+}
+
 variable "primary_db_arn" {
   description = "ARN of primary region's RDS instance — only needed on the secondary apply, grabbed from primary's db_arn output"
   type        = string
