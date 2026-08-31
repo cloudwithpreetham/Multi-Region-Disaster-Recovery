@@ -13,6 +13,10 @@ module "region" {
   asg_max_size         = var.asg_max_size
   asg_desired_capacity = var.asg_desired_capacity
 
+  scale_target_cpu   = var.scale_target_cpu
+  enable_warm_pool   = var.enable_warm_pool
+  warm_pool_min_size = var.warm_pool_min_size
+
   primary_db_arn = var.primary_db_arn
 
   replication_destination_bucket_arn = var.replication_destination_bucket_arn
