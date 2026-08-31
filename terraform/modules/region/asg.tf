@@ -58,6 +58,20 @@ resource "aws_autoscaling_group" "app" {
     version = "$Latest"
   }
 
+  # Pre-initialized stopped instances alongside the group — meaningful
+  # specifically for a standby region: it normally sits at low
+  # desired_capacity to save cost, but Day 10's promotion can happen
+  # at any moment and needs to absorb traffic fast, not after a cold
+  # multi-minute scale-out. `warm_pool` is a nested block on the ASG
+  # itself in this provider, not a separate resource.
+  dynamic "warm_pool" {
+    for_each = var.enable_warm_pool ? [1] : []
+    content {
+      pool_state = "Stopped"
+      min_size   = var.warm_pool_min_size
+    }
+  }
+
   tag {
     key                 = "Name"
     value               = "${var.project_name}-${local.role}-app"
@@ -72,5 +86,22 @@ resource "aws_autoscaling_group" "app" {
 
   lifecycle {
     create_before_destroy = true
+  }
+}
+
+# Target-tracking scaling — desired_capacity is just the baseline;
+# actual capacity flexes with load. Matters most for secondary: after
+# a Day 10 promotion it suddenly carries production traffic instead of
+# nothing, and a fixed desired_capacity wouldn't react to that on its own.
+resource "aws_autoscaling_policy" "cpu_target_tracking" {
+  name                   = "${var.project_name}-${local.role}-cpu-target-tracking"
+  autoscaling_group_name = aws_autoscaling_group.app.name
+  policy_type            = "TargetTrackingScaling"
+
+  target_tracking_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ASGAverageCPUUtilization"
+    }
+    target_value = var.scale_target_cpu
   }
 }
