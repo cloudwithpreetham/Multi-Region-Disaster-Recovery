@@ -46,8 +46,8 @@ Day-by-day roadmap for building a Terraform-codified, multi-region AWS high-avai
 
 | Day | Task                                                                                                                           | Status | Notes / Decisions |
 | --- | ------------------------------------------------------------------------------------------------------------------------------ | ------ | ----------------- |
-| 12  | Run simulated regional outage (kill primary ALB health check / shut down Region 1); measure actual failover time vs target RTO | ⬜     |                   |
-| 13  | Verify data integrity and application functionality post-failover in secondary region                                          | ⬜     |                   |
+| 12  | Run simulated regional outage (kill primary ALB health check / shut down Region 1); measure actual failover time vs target RTO | ✅     | PASS. Simulated primary application-tier outage (primary ASG scaled to 0). CloudFront origin failover kept the public endpoint serving within seconds; automated RDS promotion via Route53 health check → CloudWatch alarm (3×60s) → SNS → Lambda took ~2.5 min to detect. Failback restored steady state (replica rebuilt as a read replica of the primary). Report: `docs/dr-tests/2026-08-24-day12-failover-test.md`. Split-brain observed — an application-only outage left the primary DB writable while the replica was promoted; remediation drafted in `docs/hardening/high-findings-remediation.md`. |
+| 13  | Verify data integrity and application functionality post-failover in secondary region | ⬜     | Verification procedure drafted: `docs/dr-tests/2026-08-25-day13-data-integrity.md`. Execute against the live replica to complete — system is currently at steady state post-failback, so run the checks during the next failover or against current replication state. |
 | 14  | Write failover/failback runbook; finalize architecture diagram; define periodic DR-testing cadence                             | ⬜     |                   |
 
 ---
