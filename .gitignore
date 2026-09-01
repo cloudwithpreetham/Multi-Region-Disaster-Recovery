@@ -4,9 +4,10 @@ AGENT.md
 
 # Terraform
 .terraform/
-.terraform.lock.hcl
+# .terraform.lock.hcl is intentionally tracked — pins provider versions for reproducible applies across machines/CI
 *.tfstate
 *.tfstate.*
+*.tfplan
 crash.log
 crash.*.log
 override.tf
