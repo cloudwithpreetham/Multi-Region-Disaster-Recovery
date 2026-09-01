@@ -37,9 +37,6 @@ resource "aws_s3_bucket" "state" {
   # Bootstrap resource, not part of the app — safe to leave protected
   # even though everything else in this project gets destroyed between
   # sessions. State history matters more than the cost of one small bucket.
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_s3_bucket_versioning" "state" {
