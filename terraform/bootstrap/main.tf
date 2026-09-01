@@ -25,18 +25,21 @@ variable "project_name" {
   default     = "multi-region-dr"
 }
 
-# Bucket name must be globally unique — random suffix avoids collisions
-# without you having to hand-pick one.
-resource "random_id" "suffix" {
-  byte_length = 4
-}
+# Bucket name must be globally unique. Account ID gives a deterministic,
+# collision-safe suffix — unlike a random one, it's stable across
+# destroy/recreate cycles, so backend.tf's hardcoded bucket name never
+# goes stale just because bootstrap was torn down and rebuilt.
+data "aws_caller_identity" "current" {}
 
 resource "aws_s3_bucket" "state" {
-  bucket = "${var.project_name}-tfstate-${random_id.suffix.hex}"
+  bucket        = "${var.project_name}-tfstate-${data.aws_caller_identity.current.account_id}"
+  force_destroy = true
 
   # Bootstrap resource, not part of the app — safe to leave protected
   # even though everything else in this project gets destroyed between
   # sessions. State history matters more than the cost of one small bucket.
+  # (Removed manually for a one-off full teardown on 2026-08-23 — restore
+  # this if that's not routine going forward.)
 }
 
 resource "aws_s3_bucket_versioning" "state" {
