@@ -15,7 +15,7 @@ terraform {
   # Own state file — this isn't per-region, it needs both regions'
   # ALB info at once, unlike everything in modules/region so far.
   backend "s3" {
-    bucket = "multi-region-dr-tfstate-799997637340"
+    bucket         = "multi-region-dr-tfstate-799997637340"
     key            = "multi-region-dr/global/terraform.tfstate"
     region         = "ap-south-1"
     dynamodb_table = "multi-region-dr-tfstate-lock"
@@ -171,10 +171,10 @@ resource "aws_cloudfront_distribution" "this" {
     domain_name = var.primary_alb_dns_name
 
     custom_origin_config {
-      http_port                = 80
-      https_port               = 443
-      origin_protocol_policy   = "http-only" # ALB has no HTTPS listener yet
-      origin_ssl_protocols     = ["TLSv1.2"]
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only" # ALB has no HTTPS listener yet
+      origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
 
@@ -183,18 +183,18 @@ resource "aws_cloudfront_distribution" "this" {
     domain_name = var.secondary_alb_dns_name
 
     custom_origin_config {
-      http_port                = 80
-      https_port               = 443
-      origin_protocol_policy   = "http-only"
-      origin_ssl_protocols     = ["TLSv1.2"]
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
 
   default_cache_behavior {
     target_origin_id       = "region-failover-group"
     viewer_protocol_policy = "redirect-to-https"
-    allowed_methods         = ["GET", "HEAD", "OPTIONS"]
-    cached_methods           = ["GET", "HEAD"]
+    allowed_methods        = ["GET", "HEAD", "OPTIONS"]
+    cached_methods         = ["GET", "HEAD"]
 
     forwarded_values {
       query_string = true
@@ -204,7 +204,7 @@ resource "aws_cloudfront_distribution" "this" {
     }
 
     min_ttl     = 0
-    default_ttl = 60  # short TTL — this is dynamic app traffic, not static assets
+    default_ttl = 60 # short TTL — this is dynamic app traffic, not static assets
     max_ttl     = 300
   }
 
