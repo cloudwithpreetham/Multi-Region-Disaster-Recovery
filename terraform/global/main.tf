@@ -15,7 +15,7 @@ terraform {
   # Own state file — this isn't per-region, it needs both regions'
   # ALB info at once, unlike everything in modules/region so far.
   backend "s3" {
-    bucket         = "multi-region-dr-tfstate-d6c9434f"
+    bucket = "multi-region-dr-tfstate-799997637340"
     key            = "multi-region-dr/global/terraform.tfstate"
     region         = "ap-south-1"
     dynamodb_table = "multi-region-dr-tfstate-lock"
