@@ -124,8 +124,8 @@ resource "aws_lambda_function" "promote_replica" {
 
   environment {
     variables = {
-      SECONDARY_REGION         = var.secondary_region
-      SECONDARY_DB_IDENTIFIER  = local.secondary_db_identifier
+      SECONDARY_REGION        = var.secondary_region
+      SECONDARY_DB_IDENTIFIER = local.secondary_db_identifier
     }
   }
 }
