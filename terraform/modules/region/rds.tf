@@ -25,18 +25,18 @@ resource "aws_db_instance" "primary" {
   engine_version = var.db_engine_version
   instance_class = var.db_instance_class
 
-  allocated_storage     = var.db_allocated_storage
-  storage_encrypted     = true
-  db_name               = var.db_name
-  username              = var.db_username
-  password              = random_password.db[0].result
-  port                  = var.db_port
-  db_subnet_group_name  = aws_db_subnet_group.this.name
+  allocated_storage      = var.db_allocated_storage
+  storage_encrypted      = true
+  db_name                = var.db_name
+  username               = var.db_username
+  password               = random_password.db[0].result
+  port                   = var.db_port
+  db_subnet_group_name   = aws_db_subnet_group.this.name
   vpc_security_group_ids = [aws_security_group.rds.id]
 
   publicly_accessible = false
   multi_az            = false # cost trade-off — see AGENT.md cost-awareness note
-  skip_final_snapshot  = true # portfolio project, torn down between sessions
+  skip_final_snapshot = true  # portfolio project, torn down between sessions
 
   # Cross-region read replicas require automated backups enabled on
   # the source — this is the one thing that can't be zero here even
@@ -66,11 +66,11 @@ resource "aws_db_instance" "replica" {
   replicate_source_db = var.primary_db_arn
   instance_class      = var.db_instance_class
 
-  storage_encrypted     = true
+  storage_encrypted      = true
   kms_key_id             = data.aws_kms_key.rds[0].arn
-  port                    = var.db_port
-  db_subnet_group_name    = aws_db_subnet_group.this.name
-  vpc_security_group_ids  = [aws_security_group.rds.id]
+  port                   = var.db_port
+  db_subnet_group_name   = aws_db_subnet_group.this.name
+  vpc_security_group_ids = [aws_security_group.rds.id]
 
   publicly_accessible = false
   multi_az            = false
