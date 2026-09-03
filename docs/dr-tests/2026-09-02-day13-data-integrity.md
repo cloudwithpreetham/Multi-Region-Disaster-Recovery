@@ -2,7 +2,7 @@
 
 **Roadmap task:** Verify data integrity and application functionality post-failover in the secondary region.
 **System:** `multi-region-dr` (AWS account 799997637340) — PostgreSQL 16.13 on RDS, primary `multi-region-dr-primary-db` (`ap-south-1`), cross-region read replica `multi-region-dr-secondary-db-replica` (`us-east-1`).
-**Status:** Procedure — not yet executed. The system is at steady state post-failback (Day 12), so the promotion-time checks below run either during the next real/simulated failover or, for the replication-health subset, against the current replica now.
+**Status:** Reusable procedure — first executed on 2026-09-02; filled runbook and results are in `docs/dr-tests/2026-09-02-day13-promotion-test.md`. The promotion-time checks below run during a failover or controlled promotion; the replication-health subset can also run against the current replica at steady state.
 
 ## Why this is a separate day from the Day 12 test
 
