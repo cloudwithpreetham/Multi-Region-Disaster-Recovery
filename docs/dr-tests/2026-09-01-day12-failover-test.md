@@ -1,6 +1,6 @@
 # Multi-Region Disaster Recovery — Day 12 Failover Test Report
 
-**Date:** 2026-08-24
+**Date:** 2026-09-01
 **System:** `multi-region-dr` (AWS account 799997637340)
 **Regions:** Primary `ap-south-1` · Secondary `us-east-1`
 **Test type:** Simulated primary application-tier outage with automated failover and manual failback
@@ -28,18 +28,18 @@ Note that this exercises the application-tier failover path. The primary RDS ins
 
 ## 4. Timeline (UTC, 2026-08-24)
 
-| Time | Event |
-|---|---|
-| 16:56:34 | Terraform apply scaled the primary ASG to 0. Health poll started; first probe returned `000`. |
-| 16:56:34 – 16:56:53 | Public endpoint intermittent (`000`/`200`) for ~19 s while primary ALB targets drained and CloudFront failed over to the secondary origin. |
-| 16:56:53 onward | Endpoint stable at `200`, served via CloudFront (`x-cache: Hit from cloudfront`). |
-| 16:57:00 – 16:59:00 | `multi-region-dr-primary-health-alarm` recorded three datapoints of `0.0` (below threshold `1.0`) — primary ALB health check failing. |
-| ~16:59:00 | Alarm transitioned to `ALARM` on the third datapoint. |
-| ~16:59 – 17:00 | SNS notified the Lambda. `multi-region-dr-promote-replica` invoked: *"Promoting multi-region-dr-secondary-db-replica in us-east-1..."*, reported duration 3263 ms. |
-| ~17:00+ | RDS promotion completed in the background; the replica became a standalone instance. |
-| Failback | Terraform apply restored the primary ASG (1 changed). |
-| Failback | Terraform `apply -replace` on the replica rebuilt it as a read replica of the primary (1 added, 1 destroyed), scoped with `-target` to avoid an unrelated launch-template change. |
-| Verify | Replica `available` with source = primary; alarm `OK`; endpoint `200`. |
+| Time                | Event                                                                                                                                                                             |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 16:56:34            | Terraform apply scaled the primary ASG to 0. Health poll started; first probe returned `000`.                                                                                     |
+| 16:56:34 – 16:56:53 | Public endpoint intermittent (`000`/`200`) for ~19 s while primary ALB targets drained and CloudFront failed over to the secondary origin.                                        |
+| 16:56:53 onward     | Endpoint stable at `200`, served via CloudFront (`x-cache: Hit from cloudfront`).                                                                                                 |
+| 16:57:00 – 16:59:00 | `multi-region-dr-primary-health-alarm` recorded three datapoints of `0.0` (below threshold `1.0`) — primary ALB health check failing.                                             |
+| ~16:59:00           | Alarm transitioned to `ALARM` on the third datapoint.                                                                                                                             |
+| ~16:59 – 17:00      | SNS notified the Lambda. `multi-region-dr-promote-replica` invoked: _"Promoting multi-region-dr-secondary-db-replica in us-east-1..."_, reported duration 3263 ms.                |
+| ~17:00+             | RDS promotion completed in the background; the replica became a standalone instance.                                                                                              |
+| Failback            | Terraform apply restored the primary ASG (1 changed).                                                                                                                             |
+| Failback            | Terraform `apply -replace` on the replica rebuilt it as a read replica of the primary (1 added, 1 destroyed), scoped with `-target` to avoid an unrelated launch-template change. |
+| Verify              | Replica `available` with source = primary; alarm `OK`; endpoint `200`.                                                                                                            |
 
 ## 5. Results and recovery times
 
