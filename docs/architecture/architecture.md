@@ -4,6 +4,50 @@
 
 ![Active-passive multi-region topology](../images/active-passive-topology.png)
 
+The diagram below is the maintained, version-controlled view of the final built system — the traffic path, cross-region data replication, and the automated promotion chain:
+
+```mermaid
+flowchart LR
+  user([Client])
+  dns["Route 53 alias<br/>dr.cloudwithpreetham.in"]
+  cf{{"CloudFront<br/>origin group"}}
+
+  user --> dns --> cf
+
+  subgraph PRI["Primary — ap-south-1 (active)"]
+    albP["ALB"]
+    asgP["App ASG<br/>desired 2"]
+    dbP[("RDS primary<br/>writer")]
+    s3P[("S3 assets")]
+    albP --> asgP --> dbP
+  end
+
+  subgraph SEC["Secondary — us-east-1 (warm standby)"]
+    albS["ALB"]
+    asgS["App ASG<br/>desired 1 + warm pool"]
+    dbS[("RDS read replica")]
+    s3S[("S3 assets")]
+    albS --> asgS --> dbS
+  end
+
+  cf -->|default origin| albP
+  cf -.->|failover on 5xx / timeout| albS
+
+  dbP ==>|cross-region read replica| dbS
+  s3P ==>|Cross-Region Replication| s3S
+
+  subgraph AUTO["Failover automation — us-east-1"]
+    hc["Route 53 health check<br/>/health on primary"]
+    alarm["CloudWatch alarm<br/>3 x 60s"]
+    sns["SNS"]
+    lam["Lambda<br/>promote_replica"]
+    hc --> alarm --> sns --> lam
+  end
+
+  albP -. monitored by .-> hc
+  lam ==>|rds:PromoteReadReplica| dbS
+```
+
 Active-passive: `ap-south-1` serves all live traffic under normal operation. `us-east-1` stays warm with minimal Auto Scaling capacity and an RDS read replica, promoted only on failover. Route53 health checks monitor the primary; failure triggers Route53 failover routing to the secondary, with the RDS replica promoted to writer as part of the failover procedure.
 
 Rejected active-active: adds data-consistency and write-conflict complexity, plus continuous double-cost, without a hard zero-downtime requirement to justify it. Active-passive also pairs naturally with Route53 failover routing (Phase 5).
@@ -21,7 +65,7 @@ One shared `terraform/modules/region` module, consumed via `terraform/environmen
 
 ## Data Replication Strategy
 
-**RDS:** Postgres 16 (major-version-only, avoids hardcoding a minor that can go stale) with a cross-region read replica. Primary generates its own master password via Terraform; the replica inherits credentials automatically — no password field on the replica resource. Cross-region encrypted replicas require an explicit `kms_key_id` in the replica's own region; `storage_encrypted = true` alone isn't accepted. `backup_retention_period = 1` on the primary is the one resource in this project that stays on even between destroy/rebuild sessions, since cross-region replicas require source backups enabled.
+**RDS:** Postgres 16 (major-version-only, avoids hardcoding a minor that can go stale) with a cross-region read replica. The primary's master password is managed by RDS in AWS Secrets Manager (`manage_master_user_password = true`), so the secret is never written to Terraform state; the replica inherits credentials from the source automatically — no password field on the replica resource. Cross-region encrypted replicas require an explicit `kms_key_id` in the replica's own region; `storage_encrypted = true` alone isn't accepted. `backup_retention_period = 1` on the primary is the one resource in this project that stays on even between destroy/rebuild sessions, since cross-region replicas require source backups enabled.
 
 **S3:** A versioned assets bucket in each region (versioning is required on both source and destination for CRR), with Cross-Region Replication configured on the primary's bucket via a dedicated IAM role. Newer AWS replication schema requires an explicit `delete_marker_replication` block (set to `Disabled` here). Measured lag: a 21-byte test object replicated primary → secondary in ~36 seconds — acceptable for static/user-asset use.
 
