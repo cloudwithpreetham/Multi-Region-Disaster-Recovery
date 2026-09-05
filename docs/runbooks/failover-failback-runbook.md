@@ -47,7 +47,7 @@ RDS engine is PostgreSQL 16.13; database `appdb`, master user `appadmin`, port `
 Confirm the trigger before acting. The automation reacts to the primary's `/health` check; distinguish the three cases:
 
 1. **Full primary regional outage** — the intended failover case. Primary ALB, app tier, and DB are all unreachable from `ap-south-1`. CloudFront serves from the secondary; the alarm fires and the Lambda promotes the replica.
-2. **Application-tier-only outage** (app down, primary DB still healthy) — this is the split-brain hazard. See the warning below; the automation will still promote the replica even though the primary DB is fine.
+2. **Application-tier-only outage** (app down, primary DB still healthy) — CloudFront may fail traffic over, but the promotion Lambda refuses to promote the replica because the primary DB is still healthy. This prevents split-brain.
 3. **Transient blip** — a single failed check. The alarm requires 3 consecutive failed minutes precisely to avoid promoting on a blip; do not intervene manually for a single failed check.
 
 Quick checks:
@@ -66,7 +66,7 @@ aws rds describe-db-instances --db-instance-identifier multi-region-dr-secondary
   --region us-east-1 --query 'DBInstances[0].[StatusInfos,ReadReplicaSourceDBInstanceIdentifier]'
 ```
 
-> **Split-brain warning (High finding 2, not yet remediated).** The promotion Lambda triggers on app-tier health alone; it does **not** check whether the primary database is actually down. In an application-only outage the primary DB stays writable while the replica is promoted, so two writers can accept data and any writes taken by the primary during the window are discarded on failback. Until the `primary_healthy` guard in `docs/hardening/high-findings-remediation.md` is applied, before allowing or forcing a promotion confirm the primary DB is genuinely unreachable — not just the app tier. If only the app is down, prefer restoring the app tier over promoting.
+> **Split-brain protection (High finding 2, implemented).** The promotion Lambda checks the primary database before promoting. When the primary DB is reachable and healthy, it returns `primary_healthy` without promoting. A genuine primary DB outage must still be confirmed before any manual promotion, and the positive automated path should be re-tested after the current live environment is restored.
 
 ## Failover procedure
 
@@ -153,7 +153,7 @@ Testing is what keeps this runbook trustworthy. Run the following on a schedule;
 | Runbook & credential review   | Annual                                | Re-read this runbook against the live system for drift; rotate the RDS master password (now an RDS/Secrets Manager rotation).                     | Runbook accurate; secret rotated.                                        | This document                                                |
 | Targeted re-test              | After any change to the failover path | Re-run whichever test covers the changed component.                                                                                               | As per the affected test.                                                | —                                                            |
 
-After High finding 2 is remediated, re-run the failover game-day: an application-only outage should then leave the replica untouched (the `primary_healthy` guard makes promotion a no-op), while a genuine primary-DB loss still promotes.
+The split-brain guard is implemented. Re-run the failover game-day after the live environment is restored: an application-only outage should leave the replica untouched (`primary_healthy` makes promotion a no-op), while a genuine primary-DB loss should still promote.
 
 ## References
 
