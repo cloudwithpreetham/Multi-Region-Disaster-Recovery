@@ -77,6 +77,18 @@ variable "primary_db_arn" {
   default     = null
 }
 
+variable "origin_domain_name" {
+  description = "HTTPS hostname for this region's ALB origin"
+  type        = string
+  default     = null
+}
+
+variable "dns_zone_id" {
+  description = "Route 53 hosted zone ID for regional ALB certificate validation"
+  type        = string
+  default     = null
+}
+
 variable "replication_destination_bucket_arn" {
   description = "ARN of secondary region's assets bucket — only needed on the primary apply, grabbed from secondary's assets_bucket_arn output"
   type        = string
