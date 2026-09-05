@@ -20,4 +20,7 @@ module "region" {
   primary_db_arn = var.primary_db_arn
 
   replication_destination_bucket_arn = var.replication_destination_bucket_arn
+
+  origin_domain_name = var.origin_domain_name
+  dns_zone_id        = var.dns_zone_id
 }
