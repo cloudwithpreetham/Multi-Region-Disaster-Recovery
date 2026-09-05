@@ -73,6 +73,16 @@ variable "secondary_region" {
   default     = "us-east-1"
 }
 
+variable "primary_origin_domain_name" {
+  description = "HTTPS hostname for the primary ALB"
+  type        = string
+}
+
+variable "secondary_origin_domain_name" {
+  description = "HTTPS hostname for the secondary ALB"
+  type        = string
+}
+
 resource "aws_route53_zone" "dr" {
   name = var.zone_name
 }
@@ -84,9 +94,13 @@ resource "aws_route53_zone" "dr" {
 # useful independently, and Day 10 wires one into the RDS-promotion
 # trigger.
 resource "aws_route53_health_check" "primary" {
-  fqdn              = var.primary_alb_dns_name
-  port              = 80
-  type              = "HTTP"
+  # Harden the failover trigger: route the check to HTTPS on 443, so the
+  # health-check path stops relying on the cleartext listener. The full
+  # follow-up step is to also add a real HTTPS ALB listener and then remove
+  # the HTTP:80 listener/ingress once the check is confirmed green on 443.
+  fqdn              = var.primary_origin_domain_name
+  port              = 443
+  type              = "HTTPS"
   resource_path     = "/health"
   request_interval  = 30
   failure_threshold = 3
@@ -97,9 +111,9 @@ resource "aws_route53_health_check" "primary" {
 }
 
 resource "aws_route53_health_check" "secondary" {
-  fqdn              = var.secondary_alb_dns_name
-  port              = 80
-  type              = "HTTP"
+  fqdn              = var.secondary_origin_domain_name
+  port              = 443
+  type              = "HTTPS"
   resource_path     = "/health"
   request_interval  = 30
   failure_threshold = 3
@@ -168,24 +182,24 @@ resource "aws_cloudfront_distribution" "this" {
 
   origin {
     origin_id   = "primary-alb"
-    domain_name = var.primary_alb_dns_name
+    domain_name = var.primary_origin_domain_name
 
     custom_origin_config {
       http_port              = 80
       https_port             = 443
-      origin_protocol_policy = "http-only" # ALB has no HTTPS listener yet
+      origin_protocol_policy = "https-only"
       origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
 
   origin {
     origin_id   = "secondary-alb"
-    domain_name = var.secondary_alb_dns_name
+    domain_name = var.secondary_origin_domain_name
 
     custom_origin_config {
       http_port              = 80
       https_port             = 443
-      origin_protocol_policy = "http-only"
+      origin_protocol_policy = "https-only"
       origin_ssl_protocols   = ["TLSv1.2"]
     }
   }
