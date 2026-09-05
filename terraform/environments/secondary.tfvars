@@ -7,6 +7,8 @@ vpc_cidr             = "10.1.0.0/16"
 public_subnet_cidrs  = ["10.1.1.0/24", "10.1.2.0/24"]
 private_subnet_cidrs = ["10.1.11.0/24", "10.1.12.0/24"]
 primary_db_arn       = "arn:aws:rds:ap-south-1:799997637340:db:multi-region-dr-primary-db"
+origin_domain_name   = "origin-secondary.dr.cloudwithpreetham.in"
+dns_zone_id          = "Z03897481STG9N8OBDG3A"
 
 # Day 11: warm standby tuning — lower baseline than primary to save
 # cost day-to-day, but max headroom raised so it can absorb full
