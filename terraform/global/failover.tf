@@ -12,10 +12,16 @@ variable "secondary_db_arn" {
   type        = string
 }
 
+variable "primary_db_arn" {
+  description = "Primary region's RDS instance ARN — from that region's db_arn output. Needed so the Lambda can confirm the primary DB is actually down before promoting, not just that the ASG health check failed (Day 12 finding: app-tier-only outages were split-braining the database)."
+  type        = string
+}
+
 locals {
   # ARN format: arn:aws:rds:region:account:db:identifier — identifier
   # is everything after the last colon.
   secondary_db_identifier = element(split(":", var.secondary_db_arn), length(split(":", var.secondary_db_arn)) - 1)
+  primary_db_identifier   = element(split(":", var.primary_db_arn), length(split(":", var.primary_db_arn)) - 1)
 }
 
 variable "alert_email" {
@@ -89,16 +95,40 @@ resource "aws_iam_role_policy_attachment" "promote_replica_logs" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+data "aws_iam_policy_document" "promote_replica_dlq" {
+  provider = aws.us_east_1
+
+  statement {
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.promote_replica_dlq.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "promote_replica_dlq" {
+  provider = aws.us_east_1
+
+  name   = "multi-region-dr-promote-replica-dlq-policy"
+  role   = aws_iam_role.promote_replica.id
+  policy = data.aws_iam_policy_document.promote_replica_dlq.json
+}
+
 data "aws_iam_policy_document" "promote_replica" {
   provider = aws.us_east_1
 
   statement {
-    # Scoped to describe (needed for the idempotency check) and
-    # promote only — not broad RDS access.
-    actions = ["rds:DescribeDBInstances", "rds:PromoteReadReplica"]
+    # Describe both instances — the secondary for the idempotency
+    # check, the primary to confirm it's genuinely down before
+    # promoting (Finding 2 fix). Promote stays scoped to secondary only.
+    actions = ["rds:DescribeDBInstances"]
     resources = [
-      "arn:aws:rds:${var.secondary_region}:*:db:${local.secondary_db_identifier}"
+      "arn:aws:rds:${var.secondary_region}:*:db:${local.secondary_db_identifier}",
+      "arn:aws:rds:${var.primary_region}:*:db:${local.primary_db_identifier}",
     ]
+  }
+
+  statement {
+    actions   = ["rds:PromoteReadReplica"]
+    resources = ["arn:aws:rds:${var.secondary_region}:*:db:${local.secondary_db_identifier}"]
   }
 }
 
@@ -126,8 +156,50 @@ resource "aws_lambda_function" "promote_replica" {
     variables = {
       SECONDARY_REGION        = var.secondary_region
       SECONDARY_DB_IDENTIFIER = local.secondary_db_identifier
+      PRIMARY_REGION          = var.primary_region
+      PRIMARY_DB_IDENTIFIER   = local.primary_db_identifier
     }
   }
+
+  dead_letter_config {
+    target_arn = aws_sns_topic.promote_replica_dlq.arn
+  }
+}
+
+# Deferred Medium item from Day 12 review: a failed or refused
+# promotion (e.g. the Lambda errors before it can log its reason)
+# should be visible, not silent.
+resource "aws_sns_topic" "promote_replica_dlq" {
+  provider = aws.us_east_1
+  name     = "multi-region-dr-promote-replica-dlq"
+}
+
+resource "aws_sns_topic_subscription" "dlq_email" {
+  count = var.alert_email != null ? 1 : 0
+
+  provider  = aws.us_east_1
+  topic_arn = aws_sns_topic.promote_replica_dlq.arn
+  protocol  = "email"
+  endpoint  = var.alert_email
+}
+
+resource "aws_cloudwatch_metric_alarm" "promote_replica_errors" {
+  provider = aws.us_east_1
+
+  alarm_name          = "multi-region-dr-promote-replica-errors"
+  namespace           = "AWS/Lambda"
+  metric_name         = "Errors"
+  dimensions          = { FunctionName = aws_lambda_function.promote_replica.function_name }
+  statistic           = "Sum"
+  period              = 300
+  evaluation_periods  = 1
+  threshold           = 0
+  comparison_operator = "GreaterThanThreshold"
+  treat_missing_data  = "notBreaching"
+
+  alarm_actions = [aws_sns_topic.promote_replica_dlq.arn]
+
+  alarm_description = "The replica-promotion Lambda errored — a failover may have silently failed to promote"
 }
 
 resource "aws_sns_topic_subscription" "lambda" {
