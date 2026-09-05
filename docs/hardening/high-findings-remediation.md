@@ -1,17 +1,19 @@
 # Hardening — Closing the Two High-Severity Findings
 
-This document turns the two High-severity items from the Day 12 review into concrete, ordered changes. Neither is a one-line edit — each has an interaction that will break the running failover if applied naively, so the gotchas are called out inline. Nothing here is applied; treat it as a plan to review with `terraform plan` before committing.
+This document records the two High-severity items from the Day 12 review, their implementation sequence, and the operational gotchas. Both findings are implemented: split-brain protection is validated for the app-only outage path, and HTTPS-only regional ALB origins are deployed with passing Route 53 health checks.
 
 The two findings:
 
-1. The ALB is internet-facing and HTTP-only, so CloudFront-to-origin traffic is cleartext and the ALB is reachable directly, bypassing CloudFront.
-2. Replica promotion is triggered by application-tier health alone, with no check that the primary database is actually down — a split-brain waiting to happen (and exactly what the Day 12 test demonstrated).
+1. The ALB was internet-facing and HTTP-only, so CloudFront-to-origin traffic was cleartext and the ALB was reachable directly, bypassing CloudFront. Regional ACM certificates, HTTPS listeners, HTTPS-only CloudFront origins, and HTTPS Route 53 checks are now deployed; the HTTP listener and port-80 ingress have been removed.
+2. Replica promotion was triggered by application-tier health alone, with no check that the primary database was actually down — a split-brain condition demonstrated by the Day 12 test. The promotion Lambda now checks the primary DB before promoting.
 
 ## Finding 1 — Encrypt and lock down the ALB origin
 
 The goal is TLS on the CloudFront-to-ALB hop and no direct public access to the ALB, without breaking the Route 53 health check. Three parts, and the order between them matters.
 
 ### 1a. HTTPS listener plus a regional ACM certificate
+
+**Status: implemented.** Both regional ALBs have validated ACM certificates, named Route 53 origin aliases, and HTTPS listeners on port 443.
 
 ACM is regional, so CloudFront's us-east-1 certificate does not cover the ALBs. Each app region needs its own certificate, validated via DNS in the `dr.cloudwithpreetham.in` zone. That zone lives in the `global` stack, so the region module needs the zone id passed in, along with a public origin hostname for the ALB (for example `origin-primary.dr.cloudwithpreetham.in` and `origin-secondary.dr.cloudwithpreetham.in`).
 
@@ -85,6 +87,8 @@ custom_origin_config {
 
 ### 1b. Restrict ALB ingress to CloudFront — but keep the health checker in
 
+**Status: implemented.** HTTP listeners and public port-80 ingress were removed after the HTTPS listeners and health checks passed.
+
 This is the trap. Locking the ALB security group to CloudFront's prefix list alone breaks the Route 53 health check: the health checkers are not in the CloudFront range, so once they can no longer reach `/health`, the alarm goes to ALARM and — because of Finding 2 — promotes the replica. You must allow both CloudFront and the Route 53 health-checker ranges.
 
 ```hcl
@@ -127,6 +131,8 @@ The cleaner end state is to move the health check itself to HTTPS on 443 against
 Sequencing is critical: ship the certificate, the HTTPS listener, and the health-check move first; confirm the check is green on 443; only then remove the HTTP:80 listener and the port-80 security-group rule. Reverse that order and you blackhole the health check and trip a false promotion.
 
 ## Finding 2 — Stop the split-brain by confirming the primary is down
+
+**Status: implemented.** The Lambda now refuses promotion when the primary DB is reachable and healthy. The app-only outage test produced the expected `primary_healthy` no-op response. A genuine primary DB outage still requires a separate positive-path test after the live environment is restored.
 
 The Lambda must check the primary database, not just whether it is itself still a replica. That needs the primary's identity and region, a slightly wider (but still scoped) IAM policy, and logic that promotes only when the primary is genuinely unreachable or in a failed state.
 
