@@ -53,6 +53,18 @@ variable "health_check_path" {
   default     = "/health"
 }
 
+variable "origin_domain_name" {
+  description = "HTTPS hostname used by CloudFront and Route 53 for this region's ALB"
+  type        = string
+  default     = null
+}
+
+variable "dns_zone_id" {
+  description = "Route 53 hosted zone ID used for the regional ALB certificate validation record"
+  type        = string
+  default     = null
+}
+
 variable "instance_type" {
   description = "EC2 instance type for app-tier ASG instances"
   type        = string
